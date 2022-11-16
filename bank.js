@@ -1,5 +1,6 @@
 //import the necessary tools & data to complete the tasks below
-
+const { timeStamp } = require('console');
+const {dbFunc, users} = require('./utilities');
 
 /* 
   Let's use the tools we've learned today to start building a banking app.
@@ -59,46 +60,97 @@ class Bank {
 
   */
 
-  constructor(city, state, startingCapital) {
-
+  constructor(name, city, state, startingCapital=10000) {
+    this.name = name;
+    this.location = `${city}, ${state}`;
+    this.startingCapital = startingCapital;
+    this.accounts = [];
   }
 
 
-  openAccount(user, password, funds) {
+  openAccount(username, password, funds) {
     const newAccount = {
       accountNumber: null,
-      userName: null,
+      username: null,
       accountBalance: null,
-      password: null
+      password: null,
+      status: null
     }
+    
+    newAccount.accountNumber = this.accounts.length;
+    newAccount.username = username;
+    newAccount.accountBalance = funds;
+    newAccount.password = password;
+    newAccount.status = 'Active';
 
-    //your code here
+    this.accounts.push(newAccount);
+    return 'Account has been activated.';
   }
 
   closeAccount(accountNumber, password) {
-    //your code here
+    const account = this.accounts[accountNumber];
+    
+    if (!Bank.isVaidAccount(account, password)) return false;
+    
+    account.accountBalance = 0;
+    account.status = 'Closed';
+    return `${account.username}'s account has been closed.`;
   }
 
   checkAccountInfo(accountNumber, password) {
-    //your code here
+    const account = this.accounts[accountNumber];
+    
+    if (!Bank.isVaidAccount(account, password)) return false;
+    
+    return `[Name:] ${account.username}, [Balance]: ${account.accountBalance}, [Status]: ${account.status}`;
   }
 
   checkBalance(accountNumber, password) {
-    //your code here
+    const account = this.accounts[accountNumber];
+    
+    if (!Bank.isVaidAccount(account, password)) return false;
+    
+    return `[Balance]: ${account.accountBalance}`;
   }
 
   processDeposit(accountNumber, password, funds) {
-    //your code here
+    const account = this.accounts[accountNumber];
+    
+    if (!Bank.isVaidAccount(account, password)) return false;
+    
+    const oldBalance = account.accountBalance;
+    account.accountBalance += funds;
+    return `[Old Balance]: ${oldBalance}, [New Balance]: ${account.accountBalance}, [Deposit Amount]: ${funds}`;
   }
 
   processWithdrawl(accountNumber, password, funds) {
-    //your code here
+    const account = this.accounts[accountNumber];
+    
+    if (!Bank.isVaidAccount(account, password)) return false;
+    
+    const oldBalance = account.accountBalance;
+    account.accountBalance -= funds;
+    return `[Old Balance]: ${oldBalance}, [New Balance]: ${account.accountBalance}, [Withdraw Amount]: ${funds}`;
   }
 
   transferFunds(accountNumber, password, funds, accountNumber2) {
-    //your code here
-  }
+    const account = this.accounts[accountNumber];
+    const account2 = this.accounts[accountNumber2];
 
+    if (!Bank.isVaidAccount(account, password)) return false;
+    if (!Bank.isVaidAccount(account2)) return false;
+    
+    const oldBalance = account.accountBalance;
+    account.accountBalance -= funds;
+    account2.accountBalance += funds;
+    return `[Old Balance]: ${oldBalance}, [New Balance]: ${account.accountBalance}, [Transfered Amount]: ${funds}`;
+  }
+  
+  static isVaidAccount(account, password=false) {
+    if (!account) return false;
+    if (password && account.password !== password) return false;
+    return true;
+  }
 
   /* 
 
@@ -127,9 +179,43 @@ class Bank {
 
 
 
+// Create a new bank instance.
+const myBank = new Bank('Free Money Bank', 'Los Angeles', 'CA', 10000)
 
-const myBank = new Bank('Free Money Bank', 'USA', 10000)
-console.log(`OPEN NEW BANK`, myBank)
+// Add all the users
+for (let user of users) {
+  myBank.openAccount(user.username, user.password, user.funds);
+}
 
+// Close an account to test functionality
+myBank.closeAccount(0, '7878');
 
+// Check to make sure the account is closed.
+console.log(myBank.checkAccountInfo(0, '7878'));
+// Compare with an open account
+console.log(myBank.checkAccountInfo(1, '1254'));
 
+// Check balance functionality
+console.log(myBank.checkBalance(0, '7878'));
+console.log(myBank.checkBalance(1, '1254'));
+
+// Proccess Deposit functionality
+console.log(myBank.processDeposit(1, '1254', 400));
+
+// Check if deposit modified the actual balance
+console.log(myBank.checkBalance(1, '1254'));
+
+// Proccess withdraw functionality
+console.log(myBank.processWithdrawl(1, '1254', 20));
+
+// Check if the withdraw modified the actual balance
+console.log(myBank.checkBalance(1, '1254'));
+
+// Make a transfer to another account. Check if it failed or not.
+let transferMessage = myBank.transferFunds(1, '1254', 50, 2);
+if (transferMessage) {
+  console.log(transferMessage);
+  console.log(myBank.checkBalance(2, '7913'));
+} else {
+  console.log('Transfer Failed.');
+}
